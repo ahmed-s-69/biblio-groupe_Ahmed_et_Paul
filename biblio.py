@@ -91,10 +91,8 @@ def list_books():
 def search_books(text):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "SELECT id, title, author FROM books WHERE title LIKE ?",
-        ("%" + text + "%",),
-    )
+    query = "SELECT id, title, author FROM books WHERE title LIKE '%" + text + "%'"
+    cur.execute(query)
     rows = cur.fetchall()
     conn.close()
     if not rows:
@@ -111,19 +109,6 @@ def borrow_book(book_id, member_id):
     if cur.fetchone() is None:
         conn.close()
         print("Erreur : livre %d introuvable." % book_id)
-        return False
-    cur.execute(
-        "SELECT id FROM loans WHERE book_id = ? AND return_date IS NULL",
-        (book_id,),
-    )
-    if cur.fetchone() is not None:
-        conn.close()
-        print("Erreur : livre %d deja emprunte." % book_id)
-        return False
-    cur.execute("SELECT id FROM members WHERE id = ?", (member_id,))
-    if cur.fetchone() is None:
-        conn.close()
-        print("Erreur : membre %d introuvable." % member_id)
         return False
     cur.execute(
         "INSERT INTO loans (book_id, member_id, loan_date) VALUES (?, ?, ?)",
@@ -150,7 +135,7 @@ def return_book(book_id):
 def late():
     c = get_connection()
     x = c.cursor()
-    x.execute("SELECT * FROM loans WHERE return_date IS NULL")
+    x.execute("SELECT * FROM loans")
     r = []
     for l in x.fetchall():
         d = datetime.strptime(l[3], "%Y-%m-%d").date()
